@@ -70,18 +70,15 @@
         let visibleCount = 0;
 
         items.forEach(item => {
-            // Buscamos el título dentro de la tarjeta
             const title = item.querySelector('.card-title').textContent.toLowerCase();
             
             if (title.includes(query)) {
-                item.classList.remove('d-none'); // Mostrar
+                item.classList.remove('d-none');
                 visibleCount++;
             } else {
-                item.classList.add('d-none'); // Ocultar
+                item.classList.add('d-none');
             }
         });
-
-        // Mostrar mensaje si no hay resultados
         const noResults = document.getElementById('no-results');
         if (visibleCount === 0) {
             noResults.classList.remove('d-none');

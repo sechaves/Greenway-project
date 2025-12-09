@@ -71,20 +71,17 @@
 </div> 
 
 <script>
-    console.log("Script de crear experiencia CARGADO"); // Mira la consola (F12) para ver esto
-
+    console.log("Script de crear experiencia CARGADO");
     document.addEventListener('DOMContentLoaded', function() {
         
         const addBtn = document.getElementById('add-image-btn');
         const container = document.getElementById('image-fields-container');
 
         if (addBtn) {
-            console.log("Botón encontrado!"); // Confirmación en consola
+            console.log("Botón encontrado!");
 
             addBtn.addEventListener('click', function() {
-                console.log("Clic en añadir foto"); // Confirmación de clic
-
-                // 1. Crear el div contenedor de la línea
+                console.log("Clic en añadir foto");
                 var newFieldGroup = document.createElement('div');
                 newFieldGroup.className = 'input-group mb-2';
 
@@ -92,26 +89,18 @@
                 var newInput = document.createElement('input');
                 newInput.type = 'text';
                 newInput.className = 'form-control';
-                newInput.name = 'imagen_url'; // Importante: mismo nombre para que Flask haga una lista
+                newInput.name = 'imagen_url';
                 newInput.placeholder = 'https://i.postimg.cc/... (Otro link)';
                 newInput.required = true;
-
-                // 3. Crear el botón de eliminar (X)
                 var deleteButton = document.createElement('button');
                 deleteButton.type = 'button';
                 deleteButton.className = 'btn btn-outline-danger';
                 deleteButton.innerText = 'X';
-                
-                // 4. Lógica para borrar esa línea específica
                 deleteButton.onclick = function() {
                     container.removeChild(newFieldGroup);
                 };
-
-                // 5. Juntar las piezas
                 newFieldGroup.appendChild(newInput);
                 newFieldGroup.appendChild(deleteButton);
-                
-                // 6. Meterlo en la página
                 container.appendChild(newFieldGroup);
             });
         } else {

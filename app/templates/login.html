@@ -63,17 +63,10 @@
     }
 </style>
 {% endblock %}
-
-
-<!-- 4. Define el contenido (el formulario) -->
 {% block content %}
 <div class="row justify-content-center">
     <div class="col-md-6 col-lg-4 text-center">
-
-        <!-- Logo -->
         <a class="brand-logo" href="{{ url_for('home') }}">GREENWAY</a>
-
-        <!-- Tarjeta de Formulario -->
         <div class="card shadow-lg mt-3">
             <div class="card-body p-4">
                 <h2 class="card-title mb-4">Iniciar Sesión</h2>
@@ -93,19 +86,11 @@
                 <div class="mt-4">
                     <a href="{{ url_for('register') }}" class="link-accent">¿No tienes una cuenta? Regístrate</a>
                 </div>
-                
-                <!-- 
-                ============================================
-                ¡¡¡ENLACE AÑADIDO AQUÍ!!!
-                ============================================
-                -->
                 <div class="mt-2">
                     <a href="{{ url_for('reset_password') }}" class="link-accent" >¿Olvidaste tu contraseña?</a>
                 </div>
             </div>
         </div>
-
-        <!-- Bloque de Notificaciones (Flash Messages) -->
         {% with messages = get_flashed_messages(with_categories=true) %}
             {% if messages %}
                 <div class="mt-3">

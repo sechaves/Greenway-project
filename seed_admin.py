@@ -1,24 +1,12 @@
 import sys
 import os
-
-# --- Añadir el proyecto raíz al path ---
 project_root = os.path.abspath(os.path.join(os.path.dirname(__file__)))
 sys.path.insert(0, project_root)
-# -----------------------------------------------------------------
-
-# Importamos AMBOS auth, pero les daremos nombres claros
-from data.firebase_config import db # Ya no necesitamos el 'auth' de cliente aquí
-from data.firebase_admin import admin_auth # Este es el que usaremos
-from domain.models import Admin # ¡Importa la clase Admin!
-
-# =================================================================
-# ¡¡CONFIGURAR ESTO!!
-# =================================================================
+from data.firebase_config import db 
+from data.firebase_admin import admin_auth
+from domain.models import Admin
 EMAIL_DEL_USUARIO_A_PROMOVER = "sechaves@unal.edu.co"
 NUEVO_ROL = "admin"
-# =================================================================
-
-
 def promover_a_admin():
     """
     Script de una sola vez para promover un usuario existente a Admin.
@@ -29,22 +17,12 @@ def promover_a_admin():
         return
 
     try:
-        # 1. Buscar al usuario en Firebase Authentication
         print(f"Buscando usuario: {EMAIL_DEL_USUARIO_A_PROMOVER}...")
-        
-        # =================================================================
-        # ¡¡AQUÍ ESTÁ LA CORRECCIÓN!!
-        # Usamos admin_auth (el SDK de Admin) en lugar de auth (el de cliente)
-        # =================================================================
         user = admin_auth.get_user_by_email(EMAIL_DEL_USUARIO_A_PROMOVER)
         user_id = user.uid
         print(f"Usuario encontrado. ID: {user_id}")
-
-        # 2. Asignar el Custom Claim (Rol)
         print(f"Asignando rol '{NUEVO_ROL}' como Custom Claim...")
         admin_auth.set_custom_user_claims(user_id, {'role': NUEVO_ROL})
-        
-        # 3. Crear instancia de Admin y guardar en el nodo "admins/"
         print(f"Creando instancia de Admin y guardando en nodo 'admins/'...")
         
         nombre_admin = user.display_name or EMAIL_DEL_USUARIO_A_PROMOVER.split('@')[0]
@@ -54,7 +32,7 @@ def promover_a_admin():
             nombre=nombre_admin,
             email=user.email
         )
-        admin_instance.save_to_db(db) # Llama al método de la clase
+        admin_instance.save_to_db(db)
 
         print("\n" + "="*30)
         print("¡ÉXITO!")

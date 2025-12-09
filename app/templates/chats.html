@@ -95,34 +95,26 @@
 
   const ROOM_ID = "{{ room_id }}"; 
   const MY_USER_ID = "{{ session.user_id }}";
-  // Usamos el nombre de la sesión si existe
   const MY_NAME = "{{ session.user_email.split('@')[0] if session.user_email else 'Usuario' }}";
 
   const messagesDiv = document.getElementById('messages');
   const msgInput = document.getElementById('msgInput');
   const sendBtn = document.getElementById('sendBtn');
   const chatListContainer = document.getElementById('chat-list-container');
-
-  // --- FUNCIÓN MEJORADA PARA OBTENER DATOS DEL USUARIO (NOMBRE Y FOTO) ---
   async function getUserData(userId, nameElementId, imgElementId) {
       const nameEl = document.getElementById(nameElementId);
       const imgEl = document.getElementById(imgElementId);
-      
-      // Helper para procesar los datos si se encuentra el usuario
       const processUserData = (userData) => {
           nameEl.innerText = userData.nombre;
           if (userData.foto_url) {
               imgEl.src = userData.foto_url;
           }
-          // Si no tiene foto_url, se queda con el avatar por defecto que ya pusimos en el HTML
       };
 
-      // 1. Buscar en propietarios
       db.ref('propietarios/' + userId).once('value').then(snap => {
           if (snap.exists()) {
               processUserData(snap.val());
           } else {
-              // 2. Si no, buscar en usuarios
               db.ref('usuarios/' + userId).once('value').then(snap2 => {
                   if (snap2.exists()) {
                       processUserData(snap2.val());
@@ -133,8 +125,6 @@
           }
       });
   }
-
-  // --- LISTAR CHATS ---
   db.ref('chats').on('value', (snapshot) => {
       chatListContainer.innerHTML = ""; 
       const allChats = snapshot.val();
@@ -156,12 +146,8 @@
               const userB = parts[3];
 
               let otherUserId = (userA === MY_USER_ID) ? userB : userA;
-              
-              // IDs únicos para los elementos HTML de este chat
               const nameSpanId = `name-${key}`; 
               const imgId = `img-${key}`;
-
-              // --- LÓGICA ÚLTIMO MENSAJE (Igual que antes) ---
               let previewText = "<i>Escribe el primer mensaje...</i>";
               const chatData = allChats[key];
               if (chatData.messages) {
@@ -177,12 +163,9 @@
                       previewText = "<strong>Tú:</strong> " + previewText;
                   }
               }
-              // -----------------------------------------------
-
               const div = document.createElement('div');
               const isActive = (key === ROOM_ID) ? 'active' : '';
               div.className = `chat-item ${isActive}`;
-              // Ponemos un avatar por defecto inicial con el ID, luego JS lo actualiza si encuentra foto real
               div.innerHTML = `
                   <img id="${imgId}" src="https://ui-avatars.com/api/?name=${otherUserId}&background=random" 
                        style="width:40px;height:40px;border-radius:50%; object-fit:cover;">
@@ -199,8 +182,6 @@
               };
 
               chatListContainer.appendChild(div);
-              
-              // Llamamos a la función mejorada para buscar nombre Y foto
               getUserData(otherUserId, nameSpanId, imgId);
           }
       });
@@ -209,14 +190,9 @@
           chatListContainer.innerHTML = "<p class='text-muted small p-2'>No participas en ningún chat todavía.</p>";
       }
   });
-
-  // --- LOGICA DE MENSAJES (DERECHA) ---
   function sendMessage() {
     const text = msgInput.value.trim();
     if (!text) return;
-
-    // NOTA IMPORTANTE: Aquí idealmente deberíamos enviar el nombre real actualizado desde la DB,
-    // no el de la sesión que puede estar viejo. Pero para este MVP está bien así.
     db.ref('chats/' + ROOM_ID + '/messages').push({
       sender_id: MY_USER_ID,
       sender_name: MY_NAME, 

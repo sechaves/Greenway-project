@@ -5,8 +5,6 @@ from flask import Flask, render_template, request, redirect, url_for, session, f
 from data.firebase_config import auth, db
 from data.firebase_admin import admin_auth
 from domain.models import Usuario, Propietaria, Admin, Persona
-
-# --- Inicialización del Chatbot (Opcional) ---
 try:
     from domain.openai_chatbot import GreenwayChatbot
     chatbot_importado = True
@@ -30,7 +28,6 @@ if chatbot_importado:
     except Exception as e:
         print(f"Error inesperado al inicializar el chatbot: {e}")
 
-# --- Control de Caché ---
 @app.after_request
 def prevent_caching(response: Response) -> Response:
     response.headers["Cache-Control"] = "no-cache, no-store, must-revalidate"
@@ -38,7 +35,6 @@ def prevent_caching(response: Response) -> Response:
     response.headers["Expires"] = "0"
     return response
 
-# --- Decoradores ---
 def login_required(f):
     @wraps(f)
     def wrapper_login(*args, **kwargs):
@@ -71,8 +67,6 @@ def role_required(role_name):
             return f(*args, **kwargs)
         return wrapper_role
     return decorator
-
-# --- Rutas de Auth ---
 @app.route('/')
 @anonymous_required
 def login():
@@ -89,7 +83,6 @@ def signup():
     email = request.form['email']
     password = request.form['password']
     nombre = request.form['nombre']
-    # telefono = request.form.get('telefono', '') 
     rol_elegido = request.form.get('rol')
 
     if not rol_elegido:
@@ -102,7 +95,6 @@ def signup():
 
         nuevo_usuario = None
         if rol_elegido == 'usuario':
-            # Ajusta según tu modelo (si pide teléfono o no)
             nuevo_usuario = Usuario(user_id, nombre, email) 
         elif rol_elegido == 'propietaria':
             nuevo_usuario = Propietaria(user_id, nombre, email)
@@ -158,7 +150,6 @@ def logout():
     flash('Has cerrado sesión exitosamente.', 'success')
     return redirect(url_for('login'))
 
-# --- ¡AQUÍ ESTABAN FALTANDO ESTAS RUTAS! ---
 @app.route('/reset-password')
 @anonymous_required
 def reset_password():
@@ -175,10 +166,7 @@ def reset_password_request():
     except Exception as e:
         flash('Error al enviar el correo. ¿Email correcto?', 'danger')
         return redirect(url_for('reset_password'))
-# ---------------------------------------------
-
-# --- Rutas App ---
-
+    
 @app.route('/home')
 @login_required
 def home():
@@ -234,8 +222,6 @@ def update_profile():
     try:
         user_id = session['user_id']
         user_rol = session['role']
-        
-        # 1. Obtener datos del formulario
         nuevo_nombre = request.form.get('nombre', '').strip()
         nuevo_telefono = request.form.get('telefono', '').strip()
         nueva_foto_url = request.form.get('foto_url', '').strip()
@@ -243,15 +229,11 @@ def update_profile():
         if not nuevo_nombre:
             flash('El nombre no puede estar vacío.', 'danger')
             return redirect(url_for('profile'))
-        
-        # 2. Preparar el objeto para actualizar en Firebase
         update_data = {
             "nombre": nuevo_nombre,
             "telefono": nuevo_telefono,
             "foto_url": nueva_foto_url
         }
-
-        # 3. Guardar en el nodo correspondiente (usuarios o propietarios)
         nodo_db = Persona.get_db_node_by_role(user_rol)
         db.child(nodo_db).child(user_id).update(update_data)
         
@@ -275,8 +257,6 @@ def delete_account():
     except Exception as e:
         flash(f'Error al eliminar tu cuenta: {e}', 'danger')
         return redirect(url_for('profile'))
-
-# --- CHAT ---
 def build_room_id(user_a: str, user_b: str, exp_id: str) -> str:
     a, b = sorted([user_a, user_b])
     return f"chat_{exp_id}_{a}_{b}"
@@ -289,33 +269,26 @@ def chats():
     
     user_id = session.get('user_id')
     room_id = None
-    target_name = owner_id # Por defecto usamos el ID si no encontramos nombre
+    target_name = owner_id
 
     if owner_id and exp_id and user_id:
         room_id = build_room_id(user_id, owner_id, exp_id)
-        
-        # --- BUSCAR EL NOMBRE REAL (Lógica Nueva) ---
         try:
-            # 1. Buscamos en propietarios
             persona = db.child("propietarios").child(owner_id).get().val()
             if not persona:
-                # 2. Si no es propietario, buscamos en usuarios
                 persona = db.child("usuarios").child(owner_id).get().val()
             
             if persona and 'nombre' in persona:
                 target_name = persona['nombre']
         except:
-            pass # Si falla, se queda con el ID
-        # --------------------------------------------
+            pass
 
     return render_template('chats.html',
                            session=session,
                            room_id=room_id,
-                           owner_id=owner_id,     # ID para lógica
-                           owner_name=target_name, # NOMBRE para mostrar
+                           owner_id=owner_id,     
+                           owner_name=target_name, 
                            exp_id=exp_id)
-
-# --- Rutas CRUD / Admin ---
 
 @app.route('/crear-experiencia')
 @login_required
@@ -332,8 +305,6 @@ def crear_experiencia_submit():
         descripcion = request.form['descripcion']
         precio_noche = request.form['precio']
         propietario_id = session['user_id']
-        
-        # Lecturas del formulario (usamos .get para que no falle si no existen)
         lista_de_imagenes = request.form.getlist('imagen_url') 
         maps_embed_url = request.form.get('maps_embed_url', '')
 
@@ -364,27 +335,22 @@ def experiencia_detalle(experiencia_id):
         if not experiencia_data:
             flash('Esa experiencia no existe.', 'danger')
             return redirect(url_for('home'))
-
-        # --- LÓGICA NUEVA: BUSCAR NOMBRE DEL DUEÑO ---
         owner_id = experiencia_data.get('propietario_id')
-        owner_name = "Anfitrión Greenway" # Nombre por defecto si no se encuentra
+        owner_name = "Anfitrión Greenway"
 
         if owner_id:
-            # 1. Buscamos en propietarios
             persona = db.child("propietarios").child(owner_id).get().val()
             if not persona:
-                # 2. Si no aparece, buscamos en usuarios (por si acaso un admin o user la creó)
                 persona = db.child("usuarios").child(owner_id).get().val()
             
             if persona and 'nombre' in persona:
                 owner_name = persona['nombre']
-        # ---------------------------------------------
 
         return render_template('experiencia_detalle.html', 
                                session=session, 
                                experiencia=experiencia_data,
                                experiencia_id=experiencia_id,
-                               owner_name=owner_name) # ¡Pasamos el nombre a la plantilla!
+                               owner_name=owner_name)
         
     except Exception as e:
         flash(f'Error al cargar: {e}', 'danger')
@@ -399,8 +365,8 @@ def admin_panel():
         all_usuarios = db.child("usuarios").get().val() or {}
         all_experiencias = db.child("experiencias").get().val() or {} 
         return render_template('admin_panel.html', session=session, 
-                               admins=all_admins, propietarios=all_propietarios, 
-                               usuarios=all_usuarios, experiencias=all_experiencias)
+            admins=all_admins, propietarios=all_propietarios, 
+            usuarios=all_usuarios, experiencias=all_experiencias)
     except:
         return redirect(url_for('home'))
 
@@ -445,9 +411,9 @@ def admin_edit_experiencia(experiencia_id):
             return redirect(url_for('experiencia_detalle', experiencia_id=experiencia_id))
             
         return render_template('admin_edit_experiencia.html', 
-                               session=session,
-                               experiencia=experiencia_data, 
-                               exp_id=experiencia_id)
+            session=session,
+            experiencia=experiencia_data, 
+            exp_id=experiencia_id)
     except Exception as e:
         return redirect(url_for('admin_panel'))
 
@@ -470,7 +436,6 @@ def admin_update_experiencia(experiencia_id):
         nueva_desc = request.form['descripcion']
         nuevo_precio = int(request.form['precio'])
         lista_de_imagenes = request.form.getlist('imagen_url')
-        # Usamos .get para que no falle si no está en el HTML
         nueva_maps_embed_url = request.form.get('maps_embed_url', '')
 
         update_data = {
@@ -506,14 +471,9 @@ def ask_chatbot():
         return jsonify({'respuesta': respuesta})
     except Exception as e:
         return jsonify({'error': 'Error interno.'}), 500
-    
-    # --- MANEJO DE ERRORES ---
 @app.errorhandler(404)
 def page_not_found(e):
-    # Nota: Pasamos 'session' para que la navbar funcione bien (mostrar login/logout)
     return render_template('404.html', session=session), 404
-
-# --- Main ---
 if __name__ == '__main__':
     if admin_auth is None:
         print("Error crítico: No se pudo inicializar el SDK Admin.")

@@ -4,7 +4,6 @@
 
 {% block styles %}
 <style>
-    /* Estilos copiados de login.html para consistencia */
     .brand-logo {
         font-weight: 900;
         font-size: 2.5rem;
@@ -68,8 +67,6 @@
         <div class="card shadow-lg mt-3">
             <div class="card-body p-4">
                 <h2 class="card-title mb-4">Crea tu cuenta</h2>
-                
-                <!-- El formulario AHORA apunta a 'signup' -->
                 <form method="POST" action="{{ url_for('signup') }}">
                     
                     <div class="mb-3 text-start">
@@ -91,17 +88,9 @@
                         <label for="password" class="form-label">Contraseña</label>
                         <input type="password" class="form-control" id="password" name="password" required>
                     </div>
-
-                    <!-- ============================================= -->
-                    <!-- ¡¡SECCIÓN DE ROLES!! -->
-                    <!-- ============================================= -->
                     <div class="mb-4 text-start">
                         <label class="form-label" style="font-weight: 600;">Tipo de Cuenta</label>
                         <div class="form-check">
-                            <!-- 
-                                name="rol" es lo que lee main.py (request.form.get('rol'))
-                                value="usuario" es el valor que se envía.
-                            -->
                             <input class="form-check-input" type="radio" name="rol" id="rolUsuario" value="usuario" checked>
                             <label class="form-check-label" for="rolUsuario">
                                 Usuario (Para reservar)
@@ -114,7 +103,6 @@
                             </label>
                         </div>
                     </div>
-                    <!-- ============================================= -->
 
                     <button type="submit" class="btn btn-greenway w-100">Registrarse</button>
                 </form>
@@ -124,8 +112,6 @@
                 </div>
             </div>
         </div>
-
-        <!-- Bloque de Notificaciones (Flash Messages) -->
         {% with messages = get_flashed_messages(with_categories=true) %}
             {% if messages %}
                 <div class="mt-3">
